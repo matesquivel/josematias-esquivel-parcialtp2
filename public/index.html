@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Parcial TP2 - Números</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+    }
+    form, .consultas {
+      margin-bottom: 20px;
+    }
+    .consultas {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    #resultadoConsulta {
+      white-space: pre-wrap;
+      background-color: #f0f0f0;
+      padding: 10px;
+      border: 1px solid #ccc;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Ingreso de Números</h1>
+
+  <form id="formulario">
+    <input type="number" id="numero" required />
+    <button type="submit">Enviar</button>
+  </form>
+
+  <p id="respuesta"></p>
+
+  <hr />
+
+  <h2>Consultas</h2>
+  <div class="consultas">
+    <button onclick="consultar('/numeros/entrada')">Ver todos</button>
+    <button onclick="consultar('/numeros/promedio')">Promedio</button>
+    <button onclick="consultar('/numeros/minmax')">Min y Max</button>
+    <button onclick="consultar('/numeros/cantidad')">Cantidad</button>
+  </div>
+
+  <div id="resultadoContainer" style="display: none;">
+    <div id="resultadoConsulta"></div>
+  </div>
+
+  <script>
+    let ultimaRutaConsultada = null;
+
+    const form = document.getElementById('formulario');
+    const resultadoContainer = document.getElementById('resultadoContainer');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const numero = document.getElementById('numero').value;
+
+      const res = await fetch('/numeros/entrada', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ numero: Number(numero) })
+      });
+
+      const data = await res.json();
+      document.getElementById('respuesta').innerText = 'Número enviado: ' + data.numero;
+      form.reset();
+
+      if (ultimaRutaConsultada) {
+        consultar(ultimaRutaConsultada);
+      }
+    });
+
+    async function consultar(ruta) {
+      ultimaRutaConsultada = ruta;
+      const res = await fetch(ruta);
+      const data = await res.json();
+      document.getElementById('resultadoConsulta').innerText = JSON.stringify(data, null, 2);
+      resultadoContainer.style.display = 'block';
+    }
+
+    function cerrarResultado() {
+      resultadoContainer.style.display = 'none';
+      ultimaRutaConsultada = null;
+    }
+
+    window.addEventListener('click', function (e) {
+      const resultadoDiv = document.getElementById('resultadoConsulta');
+      if (
+        resultadoContainer.style.display === 'block' &&
+        !resultadoContainer.contains(e.target) &&
+        !e.target.closest('.consultas') &&
+        e.target.id !== 'numero'
+      ) {
+        cerrarResultado();
+      }
+    });
+  </script>
+</body>
+</html>
